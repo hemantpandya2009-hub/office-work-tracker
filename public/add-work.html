@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Work - Office Work Tracker</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f4f6f9; }
+        .header { background-color: #1e293b; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;}
+        .header h2 { margin: 0; }
+        .container { display: flex; height: calc(100vh - 60px); }
+        .sidebar { width: 220px; background-color: #334155; color: white; padding-top: 20px; }
+        .sidebar a { display: block; color: #cbd5e1; text-decoration: none; padding: 15px 25px; border-left: 4px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background-color: #475569; color: white; border-left: 4px solid #3b82f6; }
+        .main-content { padding: 30px; flex-grow: 1; overflow-y: auto; }
+        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 600px;}
+        
+        /* Form Styles */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #334155; font-weight: bold; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        .btn-submit { background-color: #3b82f6; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; width: 100%;}
+        .btn-submit:hover { background-color: #2563eb; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Office Work Tracker</h2>
+        <span>Status: Online</span>
+    </div>
+       <div class="container">
+        <div class="sidebar">
+        <a href="/">Dashboard</a>
+        <a href="/add-work.html" class="active">Add Work</a>
+        <a href="/my-work.html">My Work</a>
+        <a href="#">Pending</a>
+        <a href="#">Reports</a>
+        <a href="/search.html">Search</a>
+      </div>
+        <div class="main-content">
+            <h1>Add New Work Record</h1>
+            <div class="card">
+                <form action="/add-work" method="POST">
+    <div class="form-group">
+        <label>Agency</label>
+        <select class="form-control" name="agency" required>
+            <option value="">Select the Agency...</option>
+            <option value="KDA">KDA</option>
+            <option value="Bhilwara">Bhilwara</option>
+            <option value="Chittorgarh">Chittorgarh</option>
+            <option value="Sawai Madhopur">Sawai Madhopur</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>RajKaj / File No.</label>
+        <input type="text" class="form-control" name="file_no" placeholder="Enter file number" required>
+    </div>
+    <div class="form-group">
+        <label>Subject</label>
+        <input type="text" class="form-control" name="subject" placeholder="What is this regarding?" required>
+    </div>
+    <div class="form-group">
+        <label>Due Date</label>
+        <input type="date" class="form-control" name="due_date">
+    </div>
+    <div class="form-group">
+        <label>Priority</label>
+        <select class="form-control" name="priority">
+            <option value="Normal">Normal</option>
+            <option value="High">High</option>
+            <option value="Urgent">Urgent</option>
+        </select>
+    </div>
+    <button type="submit" class="btn-submit">Save Work Record</button>
+</form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

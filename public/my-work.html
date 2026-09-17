@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Work - Office Work Tracker</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f4f6f9; }
+        .header { background-color: #1e293b; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;}
+        .header h2 { margin: 0; }
+        .container { display: flex; height: calc(100vh - 60px); }
+        .sidebar { width: 220px; background-color: #334155; color: white; padding-top: 20px; }
+        .sidebar a { display: block; color: #cbd5e1; text-decoration: none; padding: 15px 25px; border-left: 4px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background-color: #475569; color: white; border-left: 4px solid #3b82f6; }
+        .main-content { padding: 30px; flex-grow: 1; overflow-y: auto; }
+        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);}
+        
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #cbd5e1; }
+        th { background-color: #f8fafc; color: #334155; font-weight: bold; }
+        tr:hover { background-color: #f1f5f9; }
+        .badge { padding: 5px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .priority-high { background-color: #fef08a; color: #854d0e; }
+        .priority-urgent { background-color: #fecaca; color: #991b1b; }
+        .priority-normal { background-color: #d1fae5; color: #065f46; }
+        .btn-delete { background-color: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-delete:hover { background-color: #dc2626; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Office Work Tracker</h2>
+        <span>Status: Online</span>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <a href="/">Dashboard</a>
+            <a href="/add-work.html">Add Work</a>
+            <a href="/my-work.html" class="active">My Work</a>
+            <a href="#">Pending</a>
+            <a href="#">Reports</a>
+            <a href="/search.html">Search</a>
+        </div>
+        <div class="main-content">
+            <h1>My Work Records</h1>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <tr>
+                                 <th>Work ID</th>
+                                 <th>Agency</th>
+                                 <th>File No.</th>
+                                 <th>Subject</th>
+                                 <th>Due Date</th>
+                                 <th>Priority</th>
+                                 <th>Action</th> <!-- Add this line -->
+                            </tr>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Data will be injected here automatically by Javascript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- This script reaches out to the server, grabs the data, and builds the table rows -->
+    <script>
+    // Fetch and display the records
+    fetch('/api/work')
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.getElementById('table-body');
+            
+            data.forEach(record => {
+                let priorityClass = 'priority-normal';
+                if (record.priority === 'High') priorityClass = 'priority-high';
+                if (record.priority === 'Urgent') priorityClass = 'priority-urgent';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>#${record.id}</strong></td>
+                    <td>${record.agency}</td>
+                    <td>${record.file_no}</td>
+                    <td>${record.subject}</td>
+                    <td>${record.due_date || '-'}</td>
+                    <td><span class="badge ${priorityClass}">${record.priority || 'Normal'}</span></td>
+                    <td><button onclick="deleteRecord(${record.id})" class="btn-delete">Delete</button></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        })
+        .catch(error => console.error('Error fetching data:', error));
+
+    // Function to delete a record
+    function deleteRecord(id) {
+        if (confirm("Are you sure you want to permanently delete Work ID #" + id + "?")) {
+            fetch(`/api/work/${id}`, { method: 'DELETE' })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload(); // Refresh the page to show it's gone!
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    }
+</script>
+</body>
+</html>

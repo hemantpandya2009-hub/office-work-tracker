@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Office Work Tracker</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f4f6f9; }
+        .header { background-color: #1e293b; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;}
+        .header h2 { margin: 0; }
+        .container { display: flex; height: calc(100vh - 60px); }
+        .sidebar { width: 220px; background-color: #334155; color: white; padding-top: 20px; }
+        .sidebar a { display: block; color: #cbd5e1; text-decoration: none; padding: 15px 25px; border-left: 4px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background-color: #475569; color: white; border-left: 4px solid #3b82f6; }
+        .main-content { padding: 30px; flex-grow: 1; overflow-y: auto; }
+        .agency-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
+        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #3b82f6;}
+        .card h3 { margin-top: 0; color: #334155; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Office Work Tracker</h2>
+        <span>Status: Online</span>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <a href="/" class="active">Dashboard</a>
+            <a href="/add-work.html">Add Work</a>
+            <a href="/my-work.html">My Work</a>
+            <a href="#">Pending</a>
+            <a href="#">Reports</a>
+            <a href="/search.html">Search</a>
+        </div>
+        <div class="main-content">
+            <h1>Agency Dashboard</h1>
+            <p>Select an agency to manage its specific files, work updates, and targets.</p>
+            <div class="agency-grid">
+                <div class="card">
+                    <h3>KDA</h3>
+                    <p id="count-kda">Loading...</p>
+                </div>
+                <div class="card">
+                    <h3>Bhilwara</h3>
+                    <p id="count-bhilwara">Loading...</p>
+                </div>
+                <div class="card">
+                    <h3>Chittorgarh</h3>
+                    <p id="count-chittorgarh">Loading...</p>
+                </div>
+                <div class="card">
+                    <h3>Sawai Madhopur</h3>
+                    <p id="count-sawai">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- This script counts the tasks for each agency and updates the dashboard -->
+    <script>
+        fetch('/api/work')
+            .then(response => response.json())
+            .then(data => {
+                let kdaCount = 0;
+                let bhilwaraCount = 0;
+                let chittorgarhCount = 0;
+                let sawaiCount = 0;
+
+                // Loop through all records and count them by agency
+                data.forEach(record => {
+                    if (record.agency === 'KDA') kdaCount++;
+                    if (record.agency === 'Bhilwara') bhilwaraCount++;
+                    if (record.agency === 'Chittorgarh') chittorgarhCount++;
+                    if (record.agency === 'Sawai Madhopur') sawaiCount++;
+                });
+
+                // Update the text on the cards
+                document.getElementById('count-kda').innerText = kdaCount + " Active Tasks";
+                document.getElementById('count-bhilwara').innerText = bhilwaraCount + " Active Tasks";
+                document.getElementById('count-chittorgarh').innerText = chittorgarhCount + " Active Tasks";
+                document.getElementById('count-sawai').innerText = sawaiCount + " Active Tasks";
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    </script>
+</body>
+</html>
