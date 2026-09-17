@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Office Work Tracker</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f4f6f9; }
+        .header { background-color: #1e293b; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;}
+        .header h2 { margin: 0; }
+        .container { display: flex; height: calc(100vh - 60px); }
+        .sidebar { width: 220px; background-color: #334155; color: white; padding-top: 20px; }
+        .sidebar a { display: block; color: #cbd5e1; text-decoration: none; padding: 15px 25px; border-left: 4px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background-color: #475569; color: white; border-left: 4px solid #3b82f6; }
+        .main-content { padding: 30px; flex-grow: 1; overflow-y: auto; }
+        
+        /* Report specific styles */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
+        .stat-card h3 { margin: 0 0 10px 0; color: #64748b; font-size: 16px; }
+        .stat-card .number { font-size: 36px; font-weight: bold; color: #0f172a; margin: 0; }
+        
+        .agency-card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .agency-list { list-style: none; padding: 0; margin: 0; }
+        .agency-list li { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+        .agency-list li:last-child { border-bottom: none; }
+        .agency-name { font-weight: bold; color: #334155; }
+        .agency-count { background: #e0f2fe; color: #0369a1; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 14px;}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Office Work Tracker</h2>
+        <span>Status: Online</span>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <a href="/">Dashboard</a>
+            <a href="/add-work.html">Add Work</a>
+            <a href="/my-work.html">My Work</a>
+            <a href="/pending.html">Pending</a>
+            <a href="/reports.html" class="active">Reports</a>
+            <a href="/search.html">Search</a>
+        </div>
+        <div class="main-content">
+            <h1>Work Reports & Analytics</h1>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Tasks Tracked</h3>
+                    <p class="number" id="total-tasks">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Pending / Active</h3>
+                    <p class="number" id="pending-tasks">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Completed</h3>
+                    <p class="number" id="completed-tasks">0</p>
+                </div>
+            </div>
+
+            <div class="agency-card">
+                <h3 style="margin-top: 0; color: #334155;">Task Breakdown by Agency (All Time)</h3>
+                <ul class="agency-list" id="agency-breakdown">
+                    <!-- Agency stats will load here -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        fetch('/api/work')
+            .then(response => response.json())
+            .then(data => {
+                // 1. Calculate top-level stats
+                const total = data.length;
+                const completed = data.filter(record => record.status === 'Completed').length;
+                const pending = total - completed;
+
+                document.getElementById('total-tasks').textContent = total;
+                document.getElementById('completed-tasks').textContent = completed;
+                document.getElementById('pending-tasks').textContent = pending;
+
+                // 2. Calculate breakdown by agency
+                const agencyCounts = {};
+                data.forEach(record => {
+                    const agency = record.agency || 'Unknown';
+                    if (!agencyCounts[agency]) {
+                        agencyCounts[agency] = 0;
+                    }
+                    agencyCounts[agency]++;
+                });
+
+                // 3. Build the agency list HTML
+                const agencyListContainer = document.getElementById('agency-breakdown');
+                
+                // Convert the object into an array and sort it highest to lowest
+                const sortedAgencies = Object.entries(agencyCounts).sort((a, b) => b[1] - a[1]);
+
+                sortedAgencies.forEach(([agencyName, count]) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span class="agency-name">${agencyName}</span>
+                        <span class="agency-count">${count} Task(s)</span>
+                    `;
+                    agencyListContainer.appendChild(li);
+                });
+
+                if (sortedAgencies.length === 0) {
+                    agencyListContainer.innerHTML = '<li>No data available yet.</li>';
+                }
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    </script>
+</body>
+</html>

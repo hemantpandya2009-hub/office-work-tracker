@@ -26,18 +26,20 @@
         .priority-normal { background-color: #d1fae5; color: #065f46; }
         .btn-delete { background-color: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
         .btn-delete:hover { background-color: #dc2626; }
-        .btn-edit { 
-    background-color: #f59e0b; 
-    color: white; 
-    text-decoration: none; 
-    padding: 6px 12px; 
-    border-radius: 4px; 
-    font-size: 14px; 
-    margin-right: 5px; 
-}
-.btn-edit:hover { 
-    background-color: #d97706; 
-}
+        .btn-edit { background-color: #f59e0b; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 14px; margin-right: 5px; }
+        .btn-edit:hover { background-color: #d97706; }
+
+        /* Modal Styles */
+        dialog { width: 500px; padding: 25px; border: none; border-radius: 8px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+        dialog::backdrop { background-color: rgba(15, 23, 42, 0.6); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 15px; margin-bottom: 15px; }
+        .modal-header h2 { margin: 0; color: #1e293b; }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b; }
+        .close-btn:hover { color: #0f172a; }
+        .detail-row { margin-bottom: 10px; font-size: 15px; color: #334155;}
+        .timeline-box { max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; padding: 15px; border-radius: 4px; background: #f8fafc; }
+        .timeline-item { margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; }
+        .timeline-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
     </style>
 </head>
 <body>
@@ -50,8 +52,8 @@
             <a href="/">Dashboard</a>
             <a href="/add-work.html">Add Work</a>
             <a href="/my-work.html" class="active">My Work</a>
-            <a href="#">Pending</a>
-            <a href="#">Reports</a>
+            <a href="/pending.html">Pending</a>
+            <a href="/reports.html">Reports</a>
             <a href="/search.html">Search</a>
         </div>
         <div class="main-content">
@@ -59,17 +61,17 @@
             <div class="card">
                 <table>
                     <thead>
-    <tr>
-        <th>Work ID</th>
-        <th>Agency</th>
-        <th>File No.</th>
-        <th>Subject</th>
-        <th>Due Date</th>
-        <th>Priority</th>
-        <th>Comments</th> <!-- Add this line -->
-        <th>Action</th>
-    </tr>
-</thead>
+                        <tr>
+                            <th>Work ID</th>
+                            <th>Agency</th>
+                            <th>File No.</th>
+                            <th>Subject</th>
+                            <th>Due Date</th>
+                            <th>Priority</th>
+                            <th>Comments</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
                     <tbody id="table-body">
                         <!-- Data will be injected here automatically by Javascript -->
                     </tbody>
@@ -78,20 +80,31 @@
         </div>
     </div>
 
-    <!-- This script reaches out to the server, grabs the data, and builds the table rows -->
+    <!-- NEW: Task Details Modal -->
+    <dialog id="taskModal">
+        <div class="modal-header">
+            <h2 id="modal-title">Task Details</h2>
+            <button class="close-btn" onclick="document.getElementById('taskModal').close()">&times;</button>
+        </div>
+        <div id="modal-details">
+            <!-- Details will populate here -->
+        </div>
+        <h3 style="margin-top: 20px; color: #334155; font-size: 16px;">Full Task History</h3>
+        <div id="modal-timeline" class="timeline-box">
+            <!-- Timeline will populate here -->
+        </div>
+    </dialog>
+
     <script>
-    // NEW: Grab the agency name from the URL if it exists
     const urlParams = new URLSearchParams(window.location.search);
     const filterAgency = urlParams.get('agency');
 
-    // Fetch and display the records
     fetch('/api/work')
         .then(response => response.json())
         .then(data => {
             const tableBody = document.getElementById('table-body');
             
             data.forEach(record => {
-                // NEW: Only build the row if there's no filter, if the filter is 'All', or if the agency matches
                 if (!filterAgency || filterAgency === 'All' || record.agency === filterAgency) {
                     let priorityClass = 'priority-normal';
                     if (record.priority === 'High') priorityClass = 'priority-high';
@@ -99,7 +112,8 @@
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td><strong>#${record.id}</strong></td>
+                        <!-- UPDATED: Work ID is now a clickable link -->
+                        <td><a href="#" onclick="openTaskModal(${record.id}); return false;" style="color: #3b82f6; text-decoration: none;"><strong>#${record.id}</strong></a></td>
                         <td>${record.agency}</td>
                         <td>${record.file_no}</td>
                         <td>${record.subject}</td>
@@ -107,9 +121,7 @@
                         <td><span class="badge ${priorityClass}">${record.priority || 'Normal'}</span></td>
                         <td>${record.comments || '-'}</td>
                         <td>
-                            <!-- NEW: Edit Button -->
                             <a href="/edit-work.html?id=${record.id}" class="btn-edit">Edit</a>
-                            <!-- EXISTING: Delete Button -->
                             <button onclick="deleteRecord(${record.id})" class="btn-delete">Delete</button>
                         </td>
                     `;
@@ -119,18 +131,67 @@
         })
         .catch(error => console.error('Error fetching data:', error));
 
-    // Function to delete a record
     function deleteRecord(id) {
         if (confirm("Are you sure you want to permanently delete Work ID #" + id + "?")) {
             fetch(`/api/work/${id}`, { method: 'DELETE' })
                 .then(response => {
                     if (response.ok) {
-                        location.reload(); // Refresh the page to show it's gone!
+                        location.reload(); 
                     }
                 })
                 .catch(error => console.error('Error:', error));
         }
     }
-</script>
+
+    // NEW: Function to open and populate the modal
+    function openTaskModal(id) {
+        const modal = document.getElementById('taskModal');
+        
+        // Fetch Main Details
+        fetch(`/api/work/${id}`)
+            .then(res => res.json())
+            .then(record => {
+                document.getElementById('modal-title').innerText = `Work ID #${record.id}`;
+                
+                let attachmentLink = 'None';
+                if (record.attachment) attachmentLink = `<a href="/uploads/${record.attachment}" target="_blank" style="color: #3b82f6; font-weight: bold;">View File</a>`;
+
+                document.getElementById('modal-details').innerHTML = `
+                    <div class="detail-row"><strong>Agency:</strong> ${record.agency}</div>
+                    <div class="detail-row"><strong>File No:</strong> ${record.file_no}</div>
+                    <div class="detail-row"><strong>Subject:</strong> ${record.subject}</div>
+                    <div class="detail-row"><strong>Due Date:</strong> ${record.due_date || '-'}</div>
+                    <div class="detail-row"><strong>Priority:</strong> ${record.priority}</div>
+                    <div class="detail-row"><strong>Status:</strong> ${record.status || 'Pending'}</div>
+                    <div class="detail-row"><strong>Attachment:</strong> ${attachmentLink}</div>
+                    <div class="detail-row" style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
+                        <strong>Comments:</strong><br>${record.comments || 'No comments.'}
+                    </div>
+                `;
+            });
+
+        // Fetch Timeline Updates
+        fetch(`/api/work/${id}/updates`)
+            .then(res => res.json())
+            .then(updates => {
+                const timeline = document.getElementById('modal-timeline');
+                timeline.innerHTML = '';
+                if (updates.length === 0) {
+                    timeline.innerHTML = '<p style="color: #64748b; margin: 0;">No updates recorded yet.</p>';
+                } else {
+                    updates.forEach(update => {
+                        timeline.innerHTML += `
+                            <div class="timeline-item">
+                                <span style="color: #3b82f6; font-weight: bold; margin-right: 5px;">${update.update_date}</span>
+                                <span>${update.update_text}</span>
+                            </div>
+                        `;
+                    });
+                }
+            });
+
+        modal.showModal();
+    }
+    </script>
 </body>
 </html>

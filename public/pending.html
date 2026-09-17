@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search - Office Work Tracker</title>
+    <title>Pending Work - Office Work Tracker</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f4f6f9; }
         .header { background-color: #1e293b; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;}
@@ -15,11 +15,6 @@
         .main-content { padding: 30px; flex-grow: 1; overflow-y: auto; }
         .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);}
         
-        .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
-        .search-box input { flex-grow: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 16px; }
-        .search-box button { background-color: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        .search-box button:hover { background-color: #2563eb; }
-        
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #cbd5e1; }
         th { background-color: #f8fafc; color: #334155; font-weight: bold; }
@@ -28,6 +23,11 @@
         .priority-high { background-color: #fef08a; color: #854d0e; }
         .priority-urgent { background-color: #fecaca; color: #991b1b; }
         .priority-normal { background-color: #d1fae5; color: #065f46; }
+        
+        .btn-edit { background-color: #f59e0b; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 14px; margin-right: 5px; cursor: pointer; border: none;}
+        .btn-edit:hover { background-color: #d97706; }
+        .btn-done { background-color: #10b981; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 14px; margin-right: 5px; cursor: pointer; border: none;}
+        .btn-done:hover { background-color: #059669; }
     </style>
 </head>
 <body>
@@ -40,18 +40,13 @@
             <a href="/">Dashboard</a>
             <a href="/add-work.html">Add Work</a>
             <a href="/my-work.html">My Work</a>
-            <a href="/pending.html">Pending</a>
+            <a href="/pending.html" class="active">Pending</a>
             <a href="/reports.html">Reports</a>
-            <a href="/search.html" class="active">Search</a>
+            <a href="/search.html">Search</a>
         </div>
         <div class="main-content">
-            <h1>Search Records</h1>
+            <h1>Pending Tasks</h1>
             <div class="card">
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search by Work ID, File No, or Subject...">
-                    <button onclick="performSearch()">Search</button>
-                </div>
-                
                 <table>
                     <thead>
                         <tr>
@@ -61,11 +56,11 @@
                             <th>Subject</th>
                             <th>Due Date</th>
                             <th>Priority</th>
-                            <th>Comments</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="table-body">
-                        <!-- Search results will appear here -->
+                        <!-- Records will appear here -->
                     </tbody>
                 </table>
             </div>
@@ -73,32 +68,16 @@
     </div>
 
     <script>
-        // NEW: Listen for the 'Enter' key inside the search box
-        document.getElementById('searchInput').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                performSearch();
-            }
-        });
-
-        function performSearch() {
-            const query = document.getElementById('searchInput').value;
-            
-            // Prevent searching if the box is empty
-            if (!query.trim()) return; 
-
-            fetch(`/api/search?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    const tableBody = document.getElementById('table-body');
-                    tableBody.innerHTML = ''; // Clear old results
-                    
-                    if(data.length === 0) {
-                        // Updated colspan to 7 to account for the new Comments column
-                        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No records found.</td></tr>';
-                        return;
-                    }
-
-                    data.forEach(record => {
+        fetch('/api/work')
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('table-body');
+                let hasPending = false;
+                
+                data.forEach(record => {
+                    // Only show records that are not Completed
+                    if (record.status !== 'Completed') {
+                        hasPending = true;
                         let priorityClass = 'priority-normal';
                         if (record.priority === 'High') priorityClass = 'priority-high';
                         if (record.priority === 'Urgent') priorityClass = 'priority-urgent';
@@ -111,12 +90,29 @@
                             <td>${record.subject}</td>
                             <td>${record.due_date || '-'}</td>
                             <td><span class="badge ${priorityClass}">${record.priority || 'Normal'}</span></td>
-                            <td>${record.comments || '-'}</td>
+                            <td>
+                                <button onclick="markCompleted(${record.id})" class="btn-done">✔ Done</button>
+                                <a href="/edit-work.html?id=${record.id}" class="btn-edit">Edit</a>
+                            </td>
                         `;
                         tableBody.appendChild(row);
-                    });
-                })
-                .catch(error => console.error('Error fetching data:', error));
+                    }
+                });
+
+                if (!hasPending) {
+                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No pending tasks! 🎉</td></tr>';
+                }
+            })
+            .catch(error => console.error('Error fetching data:', error));
+
+        function markCompleted(id) {
+            if (confirm("Mark Work ID #" + id + " as Completed? It will be removed from this list.")) {
+                fetch(`/api/work/${id}/complete`, { method: 'POST' })
+                    .then(response => {
+                        if (response.ok) location.reload();
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
         }
     </script>
 </body>

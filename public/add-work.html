@@ -33,14 +33,14 @@
         <a href="/">Dashboard</a>
         <a href="/add-work.html" class="active">Add Work</a>
         <a href="/my-work.html">My Work</a>
-        <a href="#">Pending</a>
-        <a href="#">Reports</a>
+        <a href="/pending.html">Pending</a>
+        <a href="/reports.html">Reports</a>
         <a href="/search.html">Search</a>
       </div>
         <div class="main-content">
             <h1>Add New Work Record</h1>
             <div class="card">
-                <form action="/add-work" method="POST">
+                <form action="/add-work" method="POST" enctype="multipart/form-data">
     <div class="form-group">
         <label>Agency</label>
         <select class="form-control" name="agency" required>
@@ -74,6 +74,10 @@
     <div class="form-group">
         <label>Comments / Remarks</label>
         <textarea class="form-control" name="comments" rows="3" placeholder="Add any additional notes here..."></textarea>
+    </div>
+    <div class="form-group">
+        <label>Optional Attachment (PDF, Image, etc.)</label>
+        <input type="file" class="form-control" name="attachment" style="padding-bottom: 35px;">
     </div>
     <button type="submit" class="btn-submit">Save Work Record</button>
 </form>
