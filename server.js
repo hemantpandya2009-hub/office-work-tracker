@@ -115,7 +115,40 @@ app.delete('/api/work/:id', (req, res) => {
     }
   });
 });
+// Fetch a single record to pre-fill the edit form
+app.get('/api/work/:id', (req, res) => {
+  const query = `SELECT * FROM work_records WHERE id = ?`;
+  
+  // Notice we use db.get() here instead of db.all() because we only want one row
+  db.get(query, [req.params.id], (err, row) => {
+    if (err) {
+      res.status(500).send("Error fetching record");
+    } else {
+      res.json(row);
+    }
+  });
+});
 
+// Save the updated record back to the database
+app.post('/edit-work/:id', (req, res) => {
+  const { agency, file_no, subject, due_date, priority, comments } = req.body;
+  const idToUpdate = req.params.id;
+  
+  const query = `UPDATE work_records SET agency = ?, file_no = ?, subject = ?, due_date = ?, priority = ?, comments = ? WHERE id = ?`;
+  
+  db.run(query, [agency, file_no, subject, due_date, priority, comments, idToUpdate], function(err) {
+    if (err) {
+      console.error(err.message);
+      res.send('Error updating record.');
+    } else {
+      console.log(`Record #${idToUpdate} was successfully updated.`);
+      res.send(`<script>
+        alert("Work Record Updated Successfully!");
+        window.location.href = "/my-work.html";
+      </script>`);
+    }
+  });
+});
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });

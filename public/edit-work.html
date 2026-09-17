@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Work - Office Work Tracker</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f4f6f9; }
+        .header { background-color: #1e293b; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;}
+        .header h2 { margin: 0; }
+        .container { display: flex; height: calc(100vh - 60px); }
+        .sidebar { width: 220px; background-color: #334155; color: white; padding-top: 20px; }
+        .sidebar a { display: block; color: #cbd5e1; text-decoration: none; padding: 15px 25px; border-left: 4px solid transparent; }
+        .sidebar a:hover, .sidebar a.active { background-color: #475569; color: white; border-left: 4px solid #3b82f6; }
+        .main-content { padding: 30px; flex-grow: 1; overflow-y: auto; }
+        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 600px;}
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #334155; font-weight: bold; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        .btn-submit { background-color: #10b981; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; width: 100%;}
+        .btn-submit:hover { background-color: #059669; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Office Work Tracker</h2>
+        <span>Status: Online</span>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <a href="/">Dashboard</a>
+            <a href="/add-work.html">Add Work</a>
+            <a href="/my-work.html" class="active">My Work</a>
+            <a href="#">Pending</a>
+            <a href="#">Reports</a>
+            <a href="/search.html">Search</a>
+        </div>
+        <div class="main-content">
+            <h1>Edit Work Record</h1>
+            <div class="card">
+                <!-- The action will be updated by JavaScript once it knows the record ID -->
+                <form id="editForm" method="POST">
+                    <div class="form-group">
+                        <label>Agency</label>
+                        <select class="form-control" name="agency" id="agency" required>
+                            <option value="">Select the Agency...</option>
+                            <option value="KDA">KDA</option>
+                            <option value="Bhilwara">Bhilwara</option>
+                            <option value="Chittorgarh">Chittorgarh</option>
+                            <option value="Sawai Madhopur">Sawai Madhopur</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>RajKaj / File No.</label>
+                        <input type="text" class="form-control" name="file_no" id="file_no" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <input type="text" class="form-control" name="subject" id="subject" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Due Date</label>
+                        <input type="date" class="form-control" name="due_date" id="due_date">
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select class="form-control" name="priority" id="priority">
+                            <option value="Normal">Normal</option>
+                            <option value="High">High</option>
+                            <option value="Urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Comments / Remarks</label>
+                        <textarea class="form-control" name="comments" id="comments" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit">Update Work Record</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Grab the ID from the web address (e.g., edit-work.html?id=5)
+        const urlParams = new URLSearchParams(window.location.search);
+        const recordId = urlParams.get('id');
+
+        if (!recordId) {
+            alert("No record selected to edit!");
+            window.location.href = "/my-work.html";
+        } else {
+            // 2. Set the form to save to the correct ID
+            document.getElementById('editForm').action = `/edit-work/${recordId}`;
+
+            // 3. Ask the server for the current data
+            fetch(`/api/work/${recordId}`)
+                .then(response => response.json())
+                .then(record => {
+                    // 4. Fill in the boxes with the existing data
+                    document.getElementById('agency').value = record.agency;
+                    document.getElementById('file_no').value = record.file_no;
+                    document.getElementById('subject').value = record.subject;
+                    document.getElementById('due_date').value = record.due_date;
+                    document.getElementById('priority').value = record.priority;
+                    document.getElementById('comments').value = record.comments;
+                })
+                .catch(error => console.error('Error fetching record details:', error));
+        }
+    </script>
+</body>
+</html>

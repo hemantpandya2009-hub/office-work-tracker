@@ -26,6 +26,18 @@
         .priority-normal { background-color: #d1fae5; color: #065f46; }
         .btn-delete { background-color: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
         .btn-delete:hover { background-color: #dc2626; }
+        .btn-edit { 
+    background-color: #f59e0b; 
+    color: white; 
+    text-decoration: none; 
+    padding: 6px 12px; 
+    border-radius: 4px; 
+    font-size: 14px; 
+    margin-right: 5px; 
+}
+.btn-edit:hover { 
+    background-color: #d97706; 
+}
     </style>
 </head>
 <body>
@@ -93,8 +105,13 @@
                         <td>${record.subject}</td>
                         <td>${record.due_date || '-'}</td>
                         <td><span class="badge ${priorityClass}">${record.priority || 'Normal'}</span></td>
-                        <td>${record.comments || '-'}</td> <!-- New line for comments -->
-                        <td><button onclick="deleteRecord(${record.id})" class="btn-delete">Delete</button></td>
+                        <td>${record.comments || '-'}</td>
+                        <td>
+                            <!-- NEW: Edit Button -->
+                            <a href="/edit-work.html?id=${record.id}" class="btn-edit">Edit</a>
+                            <!-- EXISTING: Delete Button -->
+                            <button onclick="deleteRecord(${record.id})" class="btn-delete">Delete</button>
+                        </td>
                     `;
                     tableBody.appendChild(row);
                 }

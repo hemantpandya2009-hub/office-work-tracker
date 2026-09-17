@@ -61,6 +61,7 @@
                             <th>Subject</th>
                             <th>Due Date</th>
                             <th>Priority</th>
+                            <th>Comments</th>
                         </tr>
                     </thead>
                     <tbody id="table-body">
@@ -72,8 +73,19 @@
     </div>
 
     <script>
+        // NEW: Listen for the 'Enter' key inside the search box
+        document.getElementById('searchInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        });
+
         function performSearch() {
             const query = document.getElementById('searchInput').value;
+            
+            // Prevent searching if the box is empty
+            if (!query.trim()) return; 
+
             fetch(`/api/search?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
@@ -81,7 +93,8 @@
                     tableBody.innerHTML = ''; // Clear old results
                     
                     if(data.length === 0) {
-                        tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No records found.</td></tr>';
+                        // Updated colspan to 7 to account for the new Comments column
+                        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No records found.</td></tr>';
                         return;
                     }
 
@@ -98,6 +111,7 @@
                             <td>${record.subject}</td>
                             <td>${record.due_date || '-'}</td>
                             <td><span class="badge ${priorityClass}">${record.priority || 'Normal'}</span></td>
+                            <td>${record.comments || '-'}</td>
                         `;
                         tableBody.appendChild(row);
                     });
