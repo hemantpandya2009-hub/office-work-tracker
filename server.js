@@ -16,27 +16,28 @@ const db = new sqlite3.Database('./tracker.db', (err) => {
   }
 });
 
-// Create the work table if it doesn't already exist
+// Create the work table if it doesn't already exist (UPDATED WITH COMMENTS)
 db.run(`CREATE TABLE IF NOT EXISTS work_records (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   agency TEXT,
   file_no TEXT,
   subject TEXT,
   due_date TEXT,
-  priority TEXT
+  priority TEXT,
+  comments TEXT
 )`, (err) => {
   if (err) {
     console.log('Table already exists or error creating table');
   }
 });
-// Catch the data from the form and save it to the database
-// Catch the data from the form and save it to the database
+
+// Catch the data from the form and save it to the database (UPDATED WITH COMMENTS)
 app.post('/add-work', (req, res) => {
-  const { agency, file_no, subject, due_date, priority } = req.body;
+  const { agency, file_no, subject, due_date, priority, comments } = req.body;
   
-  const query = `INSERT INTO work_records (agency, file_no, subject, due_date, priority) VALUES (?, ?, ?, ?, ?)`;
+  const query = `INSERT INTO work_records (agency, file_no, subject, due_date, priority, comments) VALUES (?, ?, ?, ?, ?, ?)`;
   
-  db.run(query, [agency, file_no, subject, due_date, priority], function(err) {
+  db.run(query, [agency, file_no, subject, due_date, priority, comments], function(err) {
     if (err) {
       console.error(err.message);
       res.send('Error saving record.');
@@ -50,27 +51,27 @@ app.post('/add-work', (req, res) => {
     }
   });
 });
+
 // Send all saved work records to the frontend
 app.get('/api/work', (req, res) => {
-  const query = `SELECT * FROM work_records ORDER BY id DESC`; // ORDER BY id DESC puts the newest files at the top
+  const query = `SELECT * FROM work_records ORDER BY id DESC`; 
   
   db.all(query, [], (err, rows) => {
     if (err) {
       console.error(err.message);
       res.status(500).send("Error retrieving records");
     } else {
-      res.json(rows); // Sends the data back to the browser
+      res.json(rows); 
     }
   });
 });
-// Search the database by ID, File No, or Subject
+
 // Search the database by exact ID, or partial File No/Subject
 app.get('/api/search', (req, res) => {
   const searchTerm = req.query.q.trim();
   
-  // If the user types #1, search ONLY for that exact Work ID
   if (searchTerm.startsWith('#')) {
-    const idToSearch = searchTerm.replace('#', ''); // removes the # to get just the number
+    const idToSearch = searchTerm.replace('#', ''); 
     const query = `SELECT * FROM work_records WHERE id = ?`;
     
     db.all(query, [idToSearch], (err, rows) => {
@@ -81,7 +82,6 @@ app.get('/api/search', (req, res) => {
       }
     });
   } 
-  // Otherwise, do a partial search on File Number and Subject
   else {
     const query = `
       SELECT * FROM work_records 
@@ -99,6 +99,7 @@ app.get('/api/search', (req, res) => {
     });
   }
 });
+
 // Delete a specific work record by ID
 app.delete('/api/work/:id', (req, res) => {
   const idToDelete = req.params.id;
@@ -114,6 +115,7 @@ app.delete('/api/work/:id', (req, res) => {
     }
   });
 });
+
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });

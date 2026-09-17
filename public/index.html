@@ -16,6 +16,15 @@
         .agency-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
         .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #3b82f6;}
         .card h3 { margin-top: 0; color: #334155; }
+        .card h3 { margin-top: 0; color: #334155; }
+        .agency-card {
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+    .agency-card:hover {
+        transform: scale(1.02);
+    }
+</style>
     </style>
 </head>
 <body>
@@ -36,51 +45,77 @@
             <h1>Agency Dashboard</h1>
             <p>Select an agency to manage its specific files, work updates, and targets.</p>
             <div class="agency-grid">
-                <div class="card">
-                    <h3>KDA</h3>
-                    <p id="count-kda">Loading...</p>
-                </div>
-                <div class="card">
-                    <h3>Bhilwara</h3>
-                    <p id="count-bhilwara">Loading...</p>
-                </div>
-                <div class="card">
-                    <h3>Chittorgarh</h3>
-                    <p id="count-chittorgarh">Loading...</p>
-                </div>
-                <div class="card">
-                    <h3>Sawai Madhopur</h3>
-                    <p id="count-sawai">Loading...</p>
-                </div>
-            </div>
+    <!-- Added a 'Total/All' card so you can reset the table view -->
+    <div class="card agency-card" data-agency="All">
+        <h3>Total Work</h3>
+        <p id="count-all">Loading...</p>
+    </div>
+
+    <!-- Updated KDA Card -->
+    <div class="card agency-card" data-agency="KDA">
+        <h3>KDA</h3>
+        <p id="count-kda">Loading...</p>
+    </div>
+
+    <!-- Updated Bhilwara Card -->
+    <div class="card agency-card" data-agency="Bhilwara">
+        <h3>Bhilwara</h3>
+        <p id="count-bhilwara">Loading...</p>
+    </div>
+
+    <!-- Updated Chittorgarh Card -->
+    <div class="card agency-card" data-agency="Chittorgarh">
+        <h3>Chittorgarh</h3>
+        <p id="count-chittorgarh">Loading...</p>
+    </div>
+
+    <!-- Updated Sawai Madhopur Card -->
+    <div class="card agency-card" data-agency="Sawai Madhopur">
+        <h3>Sawai Madhopur</h3>
+        <p id="count-sawai">Loading...</p>
+    </div>
+</div>
         </div>
     </div>
 
     <!-- This script counts the tasks for each agency and updates the dashboard -->
     <script>
-        fetch('/api/work')
-            .then(response => response.json())
-            .then(data => {
-                let kdaCount = 0;
-                let bhilwaraCount = 0;
-                let chittorgarhCount = 0;
-                let sawaiCount = 0;
+    fetch('/api/work')
+        .then(response => response.json())
+        .then(data => {
+            let kdaCount = 0;
+            let bhilwaraCount = 0;
+            let chittorgarhCount = 0;
+            let sawaiCount = 0;
 
-                // Loop through all records and count them by agency
-                data.forEach(record => {
-                    if (record.agency === 'KDA') kdaCount++;
-                    if (record.agency === 'Bhilwara') bhilwaraCount++;
-                    if (record.agency === 'Chittorgarh') chittorgarhCount++;
-                    if (record.agency === 'Sawai Madhopur') sawaiCount++;
-                });
+            // Loop through all records and count them by agency
+            data.forEach(record => {
+                if (record.agency === 'KDA') kdaCount++;
+                if (record.agency === 'Bhilwara') bhilwaraCount++;
+                if (record.agency === 'Chittorgarh') chittorgarhCount++;
+                if (record.agency === 'Sawai Madhopur') sawaiCount++;
+            });
 
-                // Update the text on the cards
-                document.getElementById('count-kda').innerText = kdaCount + " Active Tasks";
-                document.getElementById('count-bhilwara').innerText = bhilwaraCount + " Active Tasks";
-                document.getElementById('count-chittorgarh').innerText = chittorgarhCount + " Active Tasks";
-                document.getElementById('count-sawai').innerText = sawaiCount + " Active Tasks";
-            })
-            .catch(error => console.error('Error fetching data:', error));
-    </script>
+            // Update the text on the cards
+            // Note: Added the update for the new "All" card using data.length
+            if(document.getElementById('count-all')) {
+                document.getElementById('count-all').innerText = data.length + " Active Tasks";
+            }
+            document.getElementById('count-kda').innerText = kdaCount + " Active Tasks";
+            document.getElementById('count-bhilwara').innerText = bhilwaraCount + " Active Tasks";
+            document.getElementById('count-chittorgarh').innerText = chittorgarhCount + " Active Tasks";
+            document.getElementById('count-sawai').innerText = sawaiCount + " Active Tasks";
+        })
+        .catch(error => console.error('Error fetching data:', error));
+
+    // NEW: Make the cards clickable to navigate to my-work.html with a filter
+    document.querySelectorAll('.agency-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const selectedFilter = this.getAttribute('data-agency');
+            // Redirect to the table page and pass the agency name in the URL
+            window.location.href = 'my-work.html?agency=' + encodeURIComponent(selectedFilter);
+        });
+    });
+</script>
 </body>
 </html>

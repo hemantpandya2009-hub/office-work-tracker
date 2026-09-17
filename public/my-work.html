@@ -47,18 +47,17 @@
             <div class="card">
                 <table>
                     <thead>
-                        <tr>
-                            <tr>
-                                 <th>Work ID</th>
-                                 <th>Agency</th>
-                                 <th>File No.</th>
-                                 <th>Subject</th>
-                                 <th>Due Date</th>
-                                 <th>Priority</th>
-                                 <th>Action</th> <!-- Add this line -->
-                            </tr>
-                        </tr>
-                    </thead>
+    <tr>
+        <th>Work ID</th>
+        <th>Agency</th>
+        <th>File No.</th>
+        <th>Subject</th>
+        <th>Due Date</th>
+        <th>Priority</th>
+        <th>Comments</th> <!-- Add this line -->
+        <th>Action</th>
+    </tr>
+</thead>
                     <tbody id="table-body">
                         <!-- Data will be injected here automatically by Javascript -->
                     </tbody>
@@ -69,6 +68,10 @@
 
     <!-- This script reaches out to the server, grabs the data, and builds the table rows -->
     <script>
+    // NEW: Grab the agency name from the URL if it exists
+    const urlParams = new URLSearchParams(window.location.search);
+    const filterAgency = urlParams.get('agency');
+
     // Fetch and display the records
     fetch('/api/work')
         .then(response => response.json())
@@ -76,21 +79,25 @@
             const tableBody = document.getElementById('table-body');
             
             data.forEach(record => {
-                let priorityClass = 'priority-normal';
-                if (record.priority === 'High') priorityClass = 'priority-high';
-                if (record.priority === 'Urgent') priorityClass = 'priority-urgent';
+                // NEW: Only build the row if there's no filter, if the filter is 'All', or if the agency matches
+                if (!filterAgency || filterAgency === 'All' || record.agency === filterAgency) {
+                    let priorityClass = 'priority-normal';
+                    if (record.priority === 'High') priorityClass = 'priority-high';
+                    if (record.priority === 'Urgent') priorityClass = 'priority-urgent';
 
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><strong>#${record.id}</strong></td>
-                    <td>${record.agency}</td>
-                    <td>${record.file_no}</td>
-                    <td>${record.subject}</td>
-                    <td>${record.due_date || '-'}</td>
-                    <td><span class="badge ${priorityClass}">${record.priority || 'Normal'}</span></td>
-                    <td><button onclick="deleteRecord(${record.id})" class="btn-delete">Delete</button></td>
-                `;
-                tableBody.appendChild(row);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>#${record.id}</strong></td>
+                        <td>${record.agency}</td>
+                        <td>${record.file_no}</td>
+                        <td>${record.subject}</td>
+                        <td>${record.due_date || '-'}</td>
+                        <td><span class="badge ${priorityClass}">${record.priority || 'Normal'}</span></td>
+                        <td>${record.comments || '-'}</td> <!-- New line for comments -->
+                        <td><button onclick="deleteRecord(${record.id})" class="btn-delete">Delete</button></td>
+                    `;
+                    tableBody.appendChild(row);
+                }
             });
         })
         .catch(error => console.error('Error fetching data:', error));
