@@ -31,7 +31,6 @@ db.run(`CREATE TABLE IF NOT EXISTS work_records (id INTEGER PRIMARY KEY AUTOINCR
 db.run(`CREATE TABLE IF NOT EXISTS task_updates (id INTEGER PRIMARY KEY AUTOINCREMENT, work_id INTEGER, update_text TEXT, update_date TEXT)`);
 
 // Create Users Table and auto-inject Master Admin
-// Create Users Table and auto-inject Master Admin
 db.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, role TEXT, agencies TEXT)`, () => {
   // Force update the existing admin username and password
   db.run(`UPDATE users SET username = 'HP', password = '1952' WHERE role = 'admin'`);
@@ -42,6 +41,7 @@ db.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, 
     }
   });
 });
+
 // AUTHENTICATION ROUTES
 app.get('/login.html', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'login.html')); });
 
@@ -65,7 +65,45 @@ app.get('/logout', (req, res) => {
   res.redirect('/login.html');
 });
 
-// THE BOUNCER
+// PASSWORD RESET ROUTES (Placed above Bouncer so unauthenticated users can access it)
+app.get('/reset-password.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
+});
+
+app.post('/reset-password', (req, res) => {
+  const { username, new_password, admin_key } = req.body;
+
+  db.get(`SELECT * FROM users WHERE username = ?`, [username], (err, user) => {
+    if (err || !user) {
+      return res.send('<script>alert("User not found!"); window.location.href="/reset-password.html";</script>');
+    }
+
+    // Require emergency recovery key if resetting the Master Admin 'HP'
+    if (user.role === 'admin') {
+      if (admin_key !== '1952-recover') {
+        return res.send('<script>alert("Unauthorized: Invalid Master Recovery Key for Admin account."); window.location.href="/reset-password.html";</script>');
+      }
+    }
+
+    db.run(`UPDATE users SET password = ? WHERE username = ?`, [new_password, username], (updateErr) => {
+      if (updateErr) {
+        res.send('<script>alert("Error updating password."); window.location.href="/reset-password.html";</script>');
+      } else {
+        res.send('<script>alert("Password successfully reset! Please log in."); window.location.href="/login.html";</script>');
+      }
+    });
+  });
+});
+// Get current user session info for frontend checks
+app.get('/api/user-session', (req, res) => {
+  if (!req.session.loggedIn) return res.status(401).json({ error: "Not logged in" });
+  res.json({
+    username: req.session.username,
+    role: req.session.role,
+    agencies: req.session.agencies
+  });
+});
+// THE BOUNCER (Protects all routes below this point)
 app.use((req, res, next) => {
   if (req.session.loggedIn) next();
   else res.redirect('/login.html');
@@ -114,6 +152,7 @@ app.delete('/api/users/:id', (req, res) => {
       db.run(`DELETE FROM users WHERE id = ?`, [req.params.id], (err) => { if (err) res.status(500).send("Error"); else res.send("Success"); });
   });
 });
+
 // MAIN APP API ROUTES (WITH RBAC & READ-ONLY PROTECTION)
 app.post('/add-work', upload.single('attachment'), (req, res) => {
   if (req.session.role === 'viewer') return res.send('<script>alert("READ-ONLY ACCOUNT: You cannot add new records."); window.location.href="/add-work.html";</script>');
@@ -205,35 +244,7 @@ app.post('/api/work/:id/updates', (req, res) => {
     if (err) res.status(500).send("Error"); else res.send("Success");
   });
 });
-// PASSWORD RESET ROUTES
-app.get('/reset-password.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
-});
 
-app.post('/reset-password', (req, res) => {
-  const { username, new_password, admin_key } = req.body;
-
-  db.get(`SELECT * FROM users WHERE username = ?`, [username], (err, user) => {
-    if (err || !user) {
-      return res.send('<script>alert("User not found!"); window.location.href="/reset-password.html";</script>');
-    }
-
-    // Require emergency recovery key if resetting the Master Admin 'HP'
-    if (user.role === 'admin') {
-      if (admin_key !== '1952-recover') {
-        return res.send('<script>alert("Unauthorized: Invalid Master Recovery Key for Admin account."); window.location.href="/reset-password.html";</script>');
-      }
-    }
-
-    db.run(`UPDATE users SET password = ? WHERE username = ?`, [new_password, username], (updateErr) => {
-      if (updateErr) {
-        res.send('<script>alert("Error updating password."); window.location.href="/reset-password.html";</script>');
-      } else {
-        res.send('<script>alert("Password successfully reset! Please log in."); window.location.href="/login.html";</script>');
-      }
-    });
-  });
-});
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });

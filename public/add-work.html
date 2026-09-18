@@ -37,6 +37,7 @@
         <a href="/reports.html">Reports</a>
         <a href="/search.html">Search</a>
         <a href="/manage-users.html">Manage Users</a>
+        <a href="/logout" style="color: #ef4444; font-weight: bold; margin-top: 20px; border-top: 1px solid #cbd5e1; padding-top: 15px; display: block; text-decoration: none;">🚪 Logout</a>
       </div>
         <div class="main-content">
             <h1>Add New Work Record</h1>
@@ -85,5 +86,59 @@
             </div>
         </div>
     </div>
+   <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const agencySelect = document.querySelector('select[name="agency"]');
+    const form = document.querySelector('form');
+    if (!agencySelect || !form) return;
+
+    // Create a warning message banner dynamically
+    const warningBanner = document.createElement('div');
+    warningBanner.style.color = '#dc2626';
+    warningBanner.style.backgroundColor = '#fee2e2';
+    warningBanner.style.padding = '10px';
+    warningBanner.style.borderRadius = '4px';
+    warningBanner.style.marginTop = '15px';
+    warningBanner.style.fontWeight = 'bold';
+    warningBanner.style.textAlign = 'center';
+    warningBanner.style.display = 'none';
+    warningBanner.innerText = '⚠️ UNAUTHORIZED AGENCY: All input fields are locked for this selection.';
+    form.appendChild(warningBanner);
+
+    // Check permissions whenever the agency selection changes
+    agencySelect.addEventListener('change', function() {
+      const selectedAgency = this.value;
+      
+      // Fetch current user session details from backend
+      fetch('/api/user-session')
+        .then(res => res.json())
+        .then(data => {
+          // If user is not admin and agency is not in their allowed list, lock all fields
+          if (data.role !== 'admin' && !data.agencies.includes(selectedAgency)) {
+            lockAllFields(true);
+          } else {
+            lockAllFields(false);
+          }
+        })
+        .catch(err => console.error("Error checking permissions:", err));
+    });
+
+    function lockAllFields(lock) {
+      // Select all inputs, textareas, selects (except the agency dropdown itself), and submit button
+      const elements = form.querySelectorAll('input, textarea, select:not([name="agency"]), button[type="submit"]');
+      elements.forEach(el => {
+        el.disabled = lock;
+        if (lock) {
+          el.style.backgroundColor = '#f1f5f9';
+          el.style.cursor = 'not-allowed';
+        } else {
+          el.style.backgroundColor = '';
+          el.style.cursor = '';
+        }
+      });
+      warningBanner.style.display = lock ? 'block' : 'none';
+    }
+  });
+</script>
 </body>
 </html>
